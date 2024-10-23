@@ -2789,12 +2789,11 @@ export const diagnostics: Diagnostics = async ({
   };
 };
 
-export const prepareCache: PrepareCache = async ({
-  workPath,
-  repoRootPath,
-  entrypoint,
-  config = {},
-}) => {
+export const prepareCache: PrepareCache = async opts => {
+  const { files, ...optsWithoutFiles } = opts;
+  console.log(JSON.stringify(Object.keys(files)));
+  console.log(JSON.stringify(optsWithoutFiles));
+  const { workPath, repoRootPath, entrypoint, config = {} } = opts;
   debug('Preparing cache...');
   const entryDirectory = path.dirname(entrypoint);
   const entryPath = path.join(workPath, entryDirectory);
@@ -2814,12 +2813,26 @@ export const prepareCache: PrepareCache = async ({
   const isMonorepo = repoRootPath && repoRootPath !== workPath;
   const cacheBasePath = repoRootPath || workPath;
   const cacheEntrypoint = path.relative(cacheBasePath, entryPath);
+  console.log({
+    workPath,
+    repoRootPath,
+    entrypoint,
+    config,
+    entryDirectory,
+    entryPath,
+    outputDirectory,
+    nextVersionRange,
+    isLegacy,
+    isMonorepo,
+    cacheBasePath,
+    cacheEntrypoint,
+  });
   const cache = {
     ...(await glob(
       isMonorepo
         ? '**/node_modules/**'
         : path.join(cacheEntrypoint, 'node_modules/**'),
-      cacheBasePath
+      { cwd: cacheBasePath, ignore: ['.vercel/**'] }
     )),
     ...(await glob(
       path.join(cacheEntrypoint, outputDirectory, 'cache/**'),
